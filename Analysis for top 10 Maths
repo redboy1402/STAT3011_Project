@@ -1,0 +1,41 @@
+
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+pisa <- read.csv("pisa_2006_2022_sample.csv")
+
+# Average score for each country in each year
+country_scores <- pisa %>%
+  group_by(country, year) %>%
+  summarise(
+    math = mean(math, na.rm = TRUE),
+    reading = mean(read, na.rm = TRUE),
+    science = mean(science, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+write.csv(country_scores, "country_scores.csv", row.names = FALSE)
+
+
+latest_year <- max(country_scores$year)
+
+latest_scores <- country_scores %>%
+  filter(year == latest_year)
+
+# GRAPH 1: Top 10 countries in mathematics
+top_countries <- latest_scores %>%
+  arrange(desc(math)) %>%
+  slice_head(n = 10)
+
+ggplot(top_countries, aes(x = reorder(country, math), y = math)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = paste("Top 10 Countries in Mathematics -", latest_year),
+    x = "Country",
+    y = "Average Mathematics Score"
+  ) +
+  theme_minimal()
+
+ggsave("top_countries.png", width = 8, height = 6)
